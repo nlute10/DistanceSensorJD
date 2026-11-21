@@ -12,16 +12,18 @@ Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 #define TFT_RS   16 //Pin connect to register select on the tft driver
 #define TFT_SDA  17 //MOSI
 #define TFT_SCL  18  //sdk
-#define SDA_PIN 8
-#define SCL_PIN 9
+#define SDA_PIN 8   //TOF sensor DATA pin
+#define SCL_PIN 9   //TOF sensor Clock pin
 
+//-------------------------------------------Display -----------------------------------------
 
-
+//Define TFT Size
 const int W = 128, H = 128;
  Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_RS, TFT_SDA, TFT_SCL, TFT_RST);// software SPI
 //Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_RS, TFT_RST); // hardware SPI
 GFXcanvas16 canvas(W,H);  // screen buffer
 
+// idk what this does
 constexpr uint16_t rgb(uint8_t r, uint8_t g, uint8_t b){
   return ((r& 0xF8) << 8) | ((g& 0xFC) << 3) | (b >> 3);
 }
@@ -34,9 +36,10 @@ const uint16_t GREEN   = rgb(0, 220, 80);
 const uint16_t ORANGE = rgb(255,160,0);
 const uint16_t BLUE    = rgb(80,140,255);
 
-//float measureDistance(){
 
-//Prints text in the center of the screen
+
+//Prints text in the center of the screen 
+//**TODO** needs to adjust for different sizes of text
 void centerText(const char* s, int y, uint16_t color) {
   int w = strlen(s) * 6;
   canvas.setCursor((W-w) / 2,y );
@@ -46,13 +49,9 @@ void centerText(const char* s, int y, uint16_t color) {
 
 
 
-
+//Draws the screen and converts the distance int to a char
 void drawScreen() {
   const int y_offset = 0;
-
-  
-
-  
 
   canvas.fillScreen(BLACK);
   canvas.setTextSize(3);
@@ -71,7 +70,7 @@ void drawScreen() {
 }
 
 
-
+//First cycle program
 void setup(){
   Serial.begin(115200);
 
@@ -88,7 +87,7 @@ void setup(){
   // power
   Serial.println(F("VL53L0X API Continuous Ranging example\n\n"));
 
-  // start continuous ranging
+  // start continuous ranging, reports position every cycle
   lox.startRangeContinuous();
   
   tft.initR(INITR_144GREENTAB);
@@ -104,6 +103,8 @@ unsigned long previousMillis = 0;
 const unsigned long interval = 100; //100ms
 
 // millis is milliseconds since boot
+
+// Repeat this while the arduino is on
 void loop(){
   
   
@@ -128,8 +129,7 @@ void loop(){
     
     Serial.println(" cm");
 
-
-    previousMillis = currentMillis;
+    previousMillis = currentMillis; //advance the time
     
     drawScreen();
   }
