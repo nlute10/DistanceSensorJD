@@ -40,7 +40,7 @@ const uint16_t ORANGE = rgb(255,160,0);
 const uint16_t BLUE    = rgb(80,140,255);
 const uint16_t RED     = rgb(255, 40, 40);
 int distanceMM = 0;   // latest reading used in loop() and drawScreen()
-bool outOfRange = false;
+bool outOfRange = true;
 bool frozen = false;
 bool lastButton = HIGH;
 unsigned long pressStartButtonHold = 0;   
@@ -125,8 +125,10 @@ void setup(){
   delay(10);                       // give it time to wake up
 
 
-  Wire.begin(SDA_PIN, SCL_PIN);   // sensor is on 8 (SDA) and 9 (SCL)
-  if (!lox.begin()) {
+  Wire.begin(SDA_PIN, SCL_PIN);
+
+if (!lox.begin(0x29, false, &Wire,
+    Adafruit_VL53L0X::VL53L0X_SENSE_LONG_RANGE)) {
     Serial.println(F("Failed to boot VL53L0X"));
     tft.setCursor(5, 50);
     tft.setTextColor(ORANGE);
@@ -149,24 +151,32 @@ lastButton = digitalRead(BUTTON_PIN);
 }
 
 unsigned long previousMillis = 0;
-const unsigned long interval = 50; //previously 50. But it casues the screen to flicker a lot so
+const unsigned long interval = 100; //previously 50. But it casues the screen to flicker a lot so
 //change it too 200 so it redraws 5 times a sec
 
 // millis is milliseconds since boot
 void loop(){
   
-  if(frozen == false && lox.isRangeComplete()) {
-    uint16_t raw = lox.readRange(); 
-    if (raw < 10000) {
-      distanceMM = (distanceMM * 3 + raw) /4;
-      outOfRange = 0;
-    }
-  
-  if (raw >= 10000) {
-    outOfRange = 1;
-  }
-  }
+  if (frozen == false && lox.isRangeComplete()) {
 
+  uint16_t raw = lox.readRange();
+
+  if (lox.readRangeStatus() == 0) {
+
+    // First valid measurement
+    if (distanceMM == 0 || outOfRange) {
+      distanceMM = raw;
+    } else {
+      // Smooth distance measurements
+      distanceMM = (distanceMM * 3 + raw + 2) / 4;
+    }
+
+    outOfRange = false;
+
+  } else {
+    outOfRange = true;
+  }
+}
   //calculate distance using speed of sound (m/s) at sea level
 
 
@@ -201,5 +211,3 @@ void loop(){
     drawScreen();
   }
 }
-
-
