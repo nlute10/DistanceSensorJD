@@ -93,7 +93,7 @@ void setup() {
   tft.initR(INITR_144GREENTAB);
   tft.setSPISpeed(8000000);
   Serial.println("Starting TFT");
-  tft.setRotation(180);
+  tft.setRotation(2);
   tft.fillScreen(BLACK); // Prevents grey screen after startup
 
   // wait up to 2 seconds for Serial, then keep going
